@@ -11,6 +11,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private LayerMask wallLayer;
     float horizontalInput;
+    private bool canJumpAgain = true;
     [SerializeField] private float RunSpeed;
     [SerializeField] private float JumpSpeed;
     [SerializeField] private float wallJumpCoolDown;
@@ -28,10 +29,17 @@ public class PlayerMovement : MonoBehaviour
             transform.localScale = new Vector3(1, 1, 1);
         else if (horizontalInput < -0.01f)
             transform.localScale = new Vector3(-1, 1, 1);
-        anim.SetBool("run", horizontalInput != 0);
-        anim.SetBool("grounded", isGrounded());
-        print(isGrounded());
 
+        anim.SetBool("run", horizontalInput != 0);
+        anim.SetBool("grounded", isGrounded() && !onWall());
+        if ((onWall() || !isGrounded()))
+        {
+            if (canJumpAgain)
+                anim.SetTrigger("jump");
+            canJumpAgain = false;
+        }
+        else
+            canJumpAgain = true;
         if (wallJumpCoolDown > 0.2f)
         {
 
@@ -57,7 +65,6 @@ public class PlayerMovement : MonoBehaviour
         if (isGrounded())
         {
             body.velocity = new Vector2(body.velocity.x, JumpSpeed);
-            anim.SetTrigger("jump");
         }
         else if (onWall() && !isGrounded())
         {
@@ -66,13 +73,7 @@ public class PlayerMovement : MonoBehaviour
 
             wallJumpCoolDown = 0;
         }
-    }
 
-
-
-    private void OnCollisionEnter2D(Collision2D other)
-    {
-        return;
     }
 
     private bool isGrounded()
@@ -84,6 +85,11 @@ public class PlayerMovement : MonoBehaviour
     {
         RaycastHit2D raycastHit = Physics2D.BoxCast(box.bounds.center, box.bounds.size, 0, new Vector2(transform.localScale.x, 0), 0.1f, wallLayer);
         return raycastHit.collider != null;
+    }
+
+    public bool canAttack()
+    {
+        return !onWall();
     }
 
 
